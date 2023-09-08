@@ -1,8 +1,19 @@
 #include <cstdio>
 #include <string>
 
-
 #include <torch/csrc/distributed/c10d/TCPStore.hpp>
+#include <nccl.h>
+
+#define C10D_NCCL_CHECK(cmd)                                   \
+  do {                                                                        \
+    ncclResult_t result = cmd;                                                \
+    if (result != ncclSuccess) {                                              \
+        printf("NCCL error in: %s:%d :: %d\n", __FILE__, __LINE__, result);     \
+        exit(-2);                                                             \
+    }                                                                         \
+  } while (0)
+
+
 
 int main(int argc, char **argv) {
     if (argc != 5) {
@@ -20,7 +31,9 @@ int main(int argc, char **argv) {
 
     c10d::TCPStore store(argv[1], opts);
 
-    // 	ncclGetUniqueId
+    ncclUniqueId ncclID;
+    C10D_NCCL_CHECK(ncclGetUniqueId(&ncclID));
+
 	// broadcastUniqueNCCLID
 	// ncclCommInitRank
 
