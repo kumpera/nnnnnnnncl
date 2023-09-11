@@ -10,9 +10,9 @@
 #include <cstdint>
 
 #include "transport.h"
-// #include "p2p.h"
-// #include "collectives.h"
-// #include "proxy.h"
+#include "p2p.h"
+#include "collectives.h"
+#include "proxy.h"
 // #include "strongstream.h"
 
 // #if CUDART_VERSION < 9000

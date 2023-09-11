@@ -45,18 +45,18 @@ NCCL_PARAM(CheckPointers, "CHECK_POINTERS", 0);
 NCCL_PARAM(CommBlocking, "COMM_BLOCKING", NCCL_CONFIG_UNDEF_INT);
 
 static ncclResult_t commReclaim(ncclComm_t comm);
-
-// static uint64_t hashUniqueId(ncclUniqueId const &id) {
-//   char const *bytes = (char const*)&id;
-//   uint64_t h = 0xdeadbeef;
-//   for(int i=0; i < (int)sizeof(ncclUniqueId); i++) {
-//     h ^= h >> 32;
-//     h *= 0x8db3db47fa2994ad;
-//     h += bytes[i];
-//   }
-//   return h;
-// }
-
+*/
+static uint64_t hashUniqueId(ncclUniqueId const &id) {
+  char const *bytes = (char const*)&id;
+  uint64_t h = 0xdeadbeef;
+  for(int i=0; i < (int)sizeof(ncclUniqueId); i++) {
+    h ^= h >> 32;
+    h *= 0x8db3db47fa2994ad;
+    h += bytes[i];
+  }
+  return h;
+}
+/*
 // GDRCOPY support: Off by default
 NCCL_PARAM(GdrCopyEnable, "GDRCOPY_ENABLE", 0);
 
