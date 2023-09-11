@@ -705,41 +705,43 @@ static int nextPow2(int v) {
   return pow2;
 }
 
-// ncclResult_t ncclTopoComputeP2pChannels(struct ncclComm* comm) {
-//   /* here we already honor comm->max/minCTAs for p2pnChannels. */
-//   if (comm->sharedRes->owner != comm) {
-//     comm->p2pnChannels = std::min(comm->nChannels, (int)ncclParamMaxP2pNChannels());
-//     comm->p2pnChannels = std::min(std::max(comm->p2pnChannels, (int)ncclParamMinP2pNChannels()), comm->sharedRes->tpP2pNChannels);
-//   } else {
-//     comm->p2pnChannels = std::min(comm->nChannels, (int)ncclParamMaxP2pNChannels());
-//     comm->p2pnChannels = std::max(comm->p2pnChannels, (int)ncclParamMinP2pNChannels());
-//   }
+ncclResult_t ncclTopoComputeP2pChannels(struct ncclComm* comm) {
+  /* here we already honor comm->max/minCTAs for p2pnChannels. */
+  if (comm->sharedRes->owner != comm) {
+    comm->p2pnChannels = std::min(comm->nChannels, (int)ncclParamMaxP2pNChannels());
+    comm->p2pnChannels = std::min(std::max(comm->p2pnChannels, (int)ncclParamMinP2pNChannels()), comm->sharedRes->tpP2pNChannels);
+  } else {
+    comm->p2pnChannels = std::min(comm->nChannels, (int)ncclParamMaxP2pNChannels());
+    comm->p2pnChannels = std::max(comm->p2pnChannels, (int)ncclParamMinP2pNChannels());
+  }
 
-//   int minChannels = comm->p2pnChannels;
-//   // We need to loop through all local GPUs to have a global picture
-//   for (int g=0; g<comm->topo->nodes[GPU].count; g++) {
-//     for (int r=0; r<comm->nRanks; r++) {
-//       int nChannels;
-//       NCCLCHECK(ncclTopoGetNchannels(comm->topo, g, r, &nChannels));
-//       if (nChannels >= 0) minChannels = std::min(minChannels, nChannels);
-//     }
-//   }
+  int minChannels = comm->p2pnChannels;
+  // We need to loop through all local GPUs to have a global picture
+  for (int g=0; g<comm->topo->nodes[GPU].count; g++) {
+    for (int r=0; r<comm->nRanks; r++) {
+      int nChannels;
+      NCCLCHECK(ncclTopoGetNchannels(comm->topo, g, r, &nChannels));
+      if (nChannels >= 0) minChannels = std::min(minChannels, nChannels);
+    }
+  }
 
-//   // Round to next pow2 nChannelsPerPeer and nChannels
-//   comm->p2pnChannelsPerPeer = nextPow2(minChannels);
-//   comm->p2pnChannels = nextPow2(comm->p2pnChannels);
+  // Round to next pow2 nChannelsPerPeer and nChannels
+  comm->p2pnChannelsPerPeer = nextPow2(minChannels);
+  comm->p2pnChannels = nextPow2(comm->p2pnChannels);
 
-//   // Init channels that weren't used so far
-//   for (int c=comm->nChannels; c<comm->p2pnChannels; c++) NCCLCHECK(initChannel(comm, c));
+  // Init channels that weren't used so far
+  //HACK HACK
+  printf("skipping initChannel in ncclTopoGetNchannels \n");
+  // for (int c=comm->nChannels; c<comm->p2pnChannels; c++) NCCLCHECK(initChannel(comm, c));
 
-//   // We want to spread channels used when there aren't many and progressively
-//   // fill the whole space of nChannels. To do so we mirror the bits in the
-//   // nChannels space.
-//   for (int c=0; c<comm->p2pnChannels; c++) {
-//     comm->p2pChannels[c] = mirrorBits(c, comm->p2pnChannels);
-//   }
-//   return ncclSuccess;
-// }
+  // We want to spread channels used when there aren't many and progressively
+  // fill the whole space of nChannels. To do so we mirror the bits in the
+  // nChannels space.
+  for (int c=0; c<comm->p2pnChannels; c++) {
+    comm->p2pChannels[c] = mirrorBits(c, comm->p2pnChannels);
+  }
+  return ncclSuccess;
+}
 
 ncclResult_t ncclTopoGetNvbGpus(struct ncclTopoSystem* system, int rank, int* nranks, int** ranks) {
   int ngpus = system->nodes[GPU].count;

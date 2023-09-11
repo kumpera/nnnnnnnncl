@@ -26,6 +26,8 @@ SOURCES = main.cc \
 		fake_nccl/net_socket.cc	\
 		fake_nccl/ibvwrap.cc	\
 		fake_nccl/ibvsymbols.cc	\
+		fake_nccl/group.cc	\
+		fake_nccl/connect.cc	\
 
 
 

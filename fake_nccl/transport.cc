@@ -65,8 +65,11 @@ void dumpData(struct ncclConnect* data, int ndata) {
   }
 }
 
-// ncclResult_t ncclTransportP2pSetup(struct ncclComm* comm, struct ncclTopoGraph* graph, int connIndex, int* highestTransportType/*=NULL*/) {
-//   // Stream used during transport setup; need for P2P pre-connect + CUDA Graph
+ncclResult_t ncclTransportP2pSetup(struct ncclComm* comm, struct ncclTopoGraph* graph, int connIndex, int* highestTransportType/*=NULL*/) {
+  //HACK HACK
+  printf("faking ncclTransportP2pSetup as working\n");
+  return ncclSuccess;
+  // Stream used during transport setup; need for P2P pre-connect + CUDA Graph
 //   ncclResult_t ret = ncclSuccess;
 //   int highestType = TRANSPORT_P2P;  // track highest transport type
 //   struct ncclConnect** data = (ncclConnect**) malloc(sizeof(ncclConnect*) * comm->nRanks); // Store intermediate send/recvData structs for connect
@@ -202,13 +205,18 @@ void dumpData(struct ncclConnect* data, int ndata) {
 //   return ret;
 // fail:
 //   goto exit;
-// }
+}
 
 extern struct ncclTransport collNetTransport;
 
 // All ranks must participate in collNetSetup call
 // We do not NCCLCHECK this call because we would fall back to P2P network in case CollNet setup fails
-// int ncclTransportCollNetSetup(struct ncclComm* comm, struct ncclTopoGraph* collNetGraph, struct ncclChannel* channel, int masterRank, int masterPeer, int collNetGraphChannelId, int type) {
+int ncclTransportCollNetSetup(struct ncclComm* comm, struct ncclTopoGraph* collNetGraph, struct ncclChannel* channel, int masterRank, int masterPeer, int collNetGraphChannelId, int type) {
+  //HACK HACK
+  printf("faking ncclTransportCollNetSetup as working\n");
+  return ncclSuccess;
+
+
 //   int fail = 1;
 //   int rank = comm->rank;
 //   int nranks = comm->nRanks;
@@ -288,7 +296,7 @@ extern struct ncclTransport collNetTransport;
 //   if (allConnects != NULL) free(allConnects);
 //   if (masterConnects != NULL) free(masterConnects);
 //   return fail;
-// }
+}
 
 ncclResult_t ncclTransportCollNetCheck(struct ncclComm* comm, int collNetSetupFail) {
   // AllGather collNet setup results
