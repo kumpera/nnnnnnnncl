@@ -131,7 +131,7 @@ ncclResult_t ncclRealloc(T** ptr, size_t oldNelem, size_t nelem) {
 
 // #else
 
-// extern int ncclCuMemEnable();
+extern int ncclCuMemEnable();
 
 // static inline ncclResult_t ncclCuMemAlloc(void **ptr, void *handlep, size_t size) {
 //   WARN("CUMEM not supported prior to CUDA 11.3");

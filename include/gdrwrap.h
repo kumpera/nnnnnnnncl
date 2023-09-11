@@ -148,105 +148,105 @@ extern gdr_t ncclGdrCopy;
 
 #include "alloc.h"
 
-typedef struct gdr_mem_desc {
-  void *gdrDevMem;
-  void *gdrMap;
-  size_t gdrOffset;
-  size_t gdrMapSize;
-  gdr_mh_t gdrMh;
-} gdr_mem_desc_t;
+// typedef struct gdr_mem_desc {
+//   void *gdrDevMem;
+//   void *gdrMap;
+//   size_t gdrOffset;
+//   size_t gdrMapSize;
+//   gdr_mh_t gdrMh;
+// } gdr_mem_desc_t;
 
-static gdr_t ncclGdrInit() {
-  int libMajor, libMinor, drvMajor, drvMinor;
-  gdr_t handle = NULL;
-  // Dynamically load the GDRAPI library symbols
-  if (wrap_gdr_symbols() == ncclSuccess) {
-    handle = wrap_gdr_open();
+// static gdr_t ncclGdrInit() {
+//   int libMajor, libMinor, drvMajor, drvMinor;
+//   gdr_t handle = NULL;
+//   // Dynamically load the GDRAPI library symbols
+//   if (wrap_gdr_symbols() == ncclSuccess) {
+//     handle = wrap_gdr_open();
 
-    if (handle != NULL) {
-      ncclResult_t res;
+//     if (handle != NULL) {
+//       ncclResult_t res;
 
-      // Query the version of libgdrapi
-      NCCLCHECKGOTO(wrap_gdr_runtime_get_version(&libMajor, &libMinor), res, error);
+//       // Query the version of libgdrapi
+//       NCCLCHECKGOTO(wrap_gdr_runtime_get_version(&libMajor, &libMinor), res, error);
 
-      // Query the version of gdrdrv driver
-      NCCLCHECKGOTO(wrap_gdr_driver_get_version(handle, &drvMajor, &drvMinor), res, error);
+//       // Query the version of gdrdrv driver
+//       NCCLCHECKGOTO(wrap_gdr_driver_get_version(handle, &drvMajor, &drvMinor), res, error);
 
-      // Only support GDRAPI 2.1 and later
-      if (libMajor < 2 || (libMajor == 2 && libMinor < 1) || drvMajor < 2 || (drvMajor == 2 && drvMinor < 1)) {
-        goto error;
-      }
-      else
-        INFO(NCCL_INIT, "GDRCOPY enabled library %d.%d driver %d.%d", libMajor, libMinor, drvMajor, drvMinor);
-    }
-  }
-  return handle;
-error:
-  if (handle != NULL) (void) wrap_gdr_close(handle);
-  return NULL;
-}
+//       // Only support GDRAPI 2.1 and later
+//       if (libMajor < 2 || (libMajor == 2 && libMinor < 1) || drvMajor < 2 || (drvMajor == 2 && drvMinor < 1)) {
+//         goto error;
+//       }
+//       else
+//         INFO(NCCL_INIT, "GDRCOPY enabled library %d.%d driver %d.%d", libMajor, libMinor, drvMajor, drvMinor);
+//     }
+//   }
+//   return handle;
+// error:
+//   if (handle != NULL) (void) wrap_gdr_close(handle);
+//   return NULL;
+// }
 
-template <typename T>
-static ncclResult_t ncclGdrCudaCalloc(T** ptr, T** devPtr, size_t nelem, void** gdrHandle) {
-  gdr_info_t info;
-  size_t mapSize;
-  gdr_mh_t mh;
-  char *devMem;
-  void *gdrMap;
+// template <typename T>
+// static ncclResult_t ncclGdrCudaCalloc(T** ptr, T** devPtr, size_t nelem, void** gdrHandle) {
+//   gdr_info_t info;
+//   size_t mapSize;
+//   gdr_mh_t mh;
+//   char *devMem;
+//   void *gdrMap;
 
-  mapSize = sizeof(T)*nelem;
+//   mapSize = sizeof(T)*nelem;
 
-  // GDRCOPY Pinned buffer has to be a minimum of a GPU_PAGE_SIZE
-  ALIGN_SIZE(mapSize, GPU_PAGE_SIZE);
-  // GDRCOPY Pinned buffer has to be GPU_PAGE_SIZE aligned too
-  NCCLCHECK(ncclCudaCalloc(&devMem, mapSize+GPU_PAGE_SIZE-1));
-  uint64_t alignedAddr = (((uint64_t) devMem) + GPU_PAGE_OFFSET) & GPU_PAGE_MASK;
-  size_t align = alignedAddr - (uint64_t)devMem;
+//   // GDRCOPY Pinned buffer has to be a minimum of a GPU_PAGE_SIZE
+//   ALIGN_SIZE(mapSize, GPU_PAGE_SIZE);
+//   // GDRCOPY Pinned buffer has to be GPU_PAGE_SIZE aligned too
+//   NCCLCHECK(ncclCudaCalloc(&devMem, mapSize+GPU_PAGE_SIZE-1));
+//   uint64_t alignedAddr = (((uint64_t) devMem) + GPU_PAGE_OFFSET) & GPU_PAGE_MASK;
+//   size_t align = alignedAddr - (uint64_t)devMem;
 
-  //TRACE(NCCL_INIT, "GDRCOPY: Pin buffer 0x%lx (%p) align %zi size %zi", alignedAddr, devMem, align, mapSize);
-  NCCLCHECK(wrap_gdr_pin_buffer(ncclGdrCopy, alignedAddr, mapSize, 0, 0, &mh));
+//   //TRACE(NCCL_INIT, "GDRCOPY: Pin buffer 0x%lx (%p) align %zi size %zi", alignedAddr, devMem, align, mapSize);
+//   NCCLCHECK(wrap_gdr_pin_buffer(ncclGdrCopy, alignedAddr, mapSize, 0, 0, &mh));
 
-  NCCLCHECK(wrap_gdr_map(ncclGdrCopy, mh, &gdrMap, mapSize));
-  //TRACE(NCCL_INIT, "GDRCOPY : mapped %p (0x%lx) at %p", devMem, alignedAddr, gdrMap);
+//   NCCLCHECK(wrap_gdr_map(ncclGdrCopy, mh, &gdrMap, mapSize));
+//   //TRACE(NCCL_INIT, "GDRCOPY : mapped %p (0x%lx) at %p", devMem, alignedAddr, gdrMap);
 
-  NCCLCHECK(wrap_gdr_get_info(ncclGdrCopy, mh, &info));
+//   NCCLCHECK(wrap_gdr_get_info(ncclGdrCopy, mh, &info));
 
-  // Will offset ever be non zero ?
-  ssize_t off = info.va - alignedAddr;
+//   // Will offset ever be non zero ?
+//   ssize_t off = info.va - alignedAddr;
 
-  gdr_mem_desc_t* md;
-  NCCLCHECK(ncclCalloc(&md, 1));
-  md->gdrDevMem = devMem;
-  md->gdrMap = gdrMap;
-  md->gdrMapSize = mapSize;
-  md->gdrOffset = off+align;
-  md->gdrMh = mh;
-  *gdrHandle = md;
+//   gdr_mem_desc_t* md;
+//   NCCLCHECK(ncclCalloc(&md, 1));
+//   md->gdrDevMem = devMem;
+//   md->gdrMap = gdrMap;
+//   md->gdrMapSize = mapSize;
+//   md->gdrOffset = off+align;
+//   md->gdrMh = mh;
+//   *gdrHandle = md;
 
-  *ptr = (T *)((char *)gdrMap+off);
-  if (devPtr) *devPtr = (T *)(devMem+off+align);
+//   *ptr = (T *)((char *)gdrMap+off);
+//   if (devPtr) *devPtr = (T *)(devMem+off+align);
 
-  TRACE(NCCL_INIT, "GDRCOPY : allocated devMem %p gdrMap %p offset %lx mh %lx mapSize %zi at %p",
-       md->gdrDevMem, md->gdrMap, md->gdrOffset, md->gdrMh.h, md->gdrMapSize, *ptr);
+//   TRACE(NCCL_INIT, "GDRCOPY : allocated devMem %p gdrMap %p offset %lx mh %lx mapSize %zi at %p",
+//        md->gdrDevMem, md->gdrMap, md->gdrOffset, md->gdrMh.h, md->gdrMapSize, *ptr);
 
-  return ncclSuccess;
-}
+//   return ncclSuccess;
+// }
 
-template <typename T>
-static ncclResult_t ncclGdrCudaCopy(void *gdrHandle, T* dst, T* src, size_t nelem) {
-  gdr_mem_desc_t *md = (gdr_mem_desc_t*)gdrHandle;
-  NCCLCHECK(wrap_gdr_copy_to_mapping(md->gdrMh, dst, src, nelem*sizeof(T)));
-  return ncclSuccess;
-}
+// template <typename T>
+// static ncclResult_t ncclGdrCudaCopy(void *gdrHandle, T* dst, T* src, size_t nelem) {
+//   gdr_mem_desc_t *md = (gdr_mem_desc_t*)gdrHandle;
+//   NCCLCHECK(wrap_gdr_copy_to_mapping(md->gdrMh, dst, src, nelem*sizeof(T)));
+//   return ncclSuccess;
+// }
 
-static ncclResult_t ncclGdrCudaFree(void* gdrHandle) {
-  gdr_mem_desc_t *md = (gdr_mem_desc_t*)gdrHandle;
-  NCCLCHECK(wrap_gdr_unmap(ncclGdrCopy, md->gdrMh, md->gdrMap, md->gdrMapSize));
-  NCCLCHECK(wrap_gdr_unpin_buffer(ncclGdrCopy, md->gdrMh));
-  NCCLCHECK(ncclCudaFree(md->gdrDevMem));
-  free(md);
+// static ncclResult_t ncclGdrCudaFree(void* gdrHandle) {
+//   gdr_mem_desc_t *md = (gdr_mem_desc_t*)gdrHandle;
+//   NCCLCHECK(wrap_gdr_unmap(ncclGdrCopy, md->gdrMh, md->gdrMap, md->gdrMapSize));
+//   NCCLCHECK(wrap_gdr_unpin_buffer(ncclGdrCopy, md->gdrMh));
+//   NCCLCHECK(ncclCudaFree(md->gdrDevMem));
+//   free(md);
 
-  return ncclSuccess;
-}
+//   return ncclSuccess;
+// }
 
 #endif // End include guard

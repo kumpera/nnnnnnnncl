@@ -14,6 +14,13 @@ SOURCES = main.cc \
 		fake_nccl/shmutils.cc	\
 		fake_nccl/profiler.cc	\
 		fake_nccl/coll_net.cc	\
+		fake_nccl/p2p.cc	\
+		fake_nccl/shm.cc	\
+		fake_nccl/net.cc	\
+
+
+# fake_nccl/paths.cc	\
+# fake_nccl/topo.cc	\
 
 # TODO break this into multiple compilation units cuz it's going to get tedious really fast if the source list gets huge
 machete: ${SOURCES}
