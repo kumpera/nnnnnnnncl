@@ -42,11 +42,12 @@ int main(int argc, char **argv) {
       return -1;
   }
 
+  int world_size = std::atoi(argv[3]);
   int my_rank = std::atoi(argv[4]);
 
   c10d::TCPStoreOptions opts;
   opts.port = std::atoi(argv[2]);
-  opts.numWorkers = std::atoi(argv[3]);
+  opts.numWorkers = world_size;
   opts.useLibUV = true; // BE BOLD
   opts.isServer = my_rank == 0;
 
@@ -56,17 +57,14 @@ int main(int argc, char **argv) {
   if (my_rank == 0) {
     C10D_NCCL_CHECK(ncclGetUniqueId(&ncclID));
     printf("rank 0 got an unique id\n");
-    // unsigned char *z = (unsigned char*)&ncclID;
-    // for(int i = 0; i < sizeof(ncclID); ++i) {
-    //   printf("%02x ", (unsigned)z[i]);
-    // }
-    // printf("\n");
   }
 
 	broadcastUniqueNCCLID(my_rank, store, &ncclID);
   printf("rank %d got nccl unique id!\n", my_rank);
-	// ncclCommInitRank
 
+  ncclComm_t comm = nullptr;
+  C10D_NCCL_CHECK(ncclCommInitRank(&comm, world_size, ncclID, my_rank));
+  printf("rank %d gots the nccl %p\n", comm);
 
     printf("done rank:%d\n", my_rank);
     return 0;
