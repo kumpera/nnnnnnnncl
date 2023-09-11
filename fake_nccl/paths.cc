@@ -299,37 +299,40 @@ compare:
   // Compute the PCI distance and compare with the p2pLevel.
   if (path->type <= p2pLevel) *p2p = 1;
 
-  if (*p2p == 1) {
-    // NCCL_IGNORE_DISABLED_P2P=2 is used by unit tests that don't want to
-    // validate against NVML at all since they are pretending to be on other hw.
-    if (g1 != g2 && ncclParamIgnoreDisabledP2p() != 2) {
-      int indexes[3] = {-1,-1,-1};
-      int verticeN = 0;
-      NCCLCHECK(ncclNvmlEnsureInitialized());
+  //HACK HACK
+  printf("disabling p2p for all\n");
+  *p2p = 0;
+  // if (*p2p == 1) {
+  //   // NCCL_IGNORE_DISABLED_P2P=2 is used by unit tests that don't want to
+  //   // validate against NVML at all since they are pretending to be on other hw.
+  //   if (g1 != g2 && ncclParamIgnoreDisabledP2p() != 2) {
+  //     int indexes[3] = {-1,-1,-1};
+  //     int verticeN = 0;
+  //     NCCLCHECK(ncclNvmlEnsureInitialized());
 
-      indexes[verticeN++] = system->nodes[GPU].nodes[g1].gpu.dev;
-      if (intermediateIndex != -1) indexes[verticeN++] = system->nodes[GPU].nodes[intermediateIndex].gpu.dev;
-      indexes[verticeN++] = system->nodes[GPU].nodes[g2].gpu.dev;
+  //     indexes[verticeN++] = system->nodes[GPU].nodes[g1].gpu.dev;
+  //     if (intermediateIndex != -1) indexes[verticeN++] = system->nodes[GPU].nodes[intermediateIndex].gpu.dev;
+  //     indexes[verticeN++] = system->nodes[GPU].nodes[g2].gpu.dev;
 
-      for (int i=1; i < verticeN; i++) {
-        nvmlGpuP2PStatus_t status;
-        status = ncclNvmlDevicePairs[indexes[i-1]][indexes[i-0]].p2pStatusRead;
-        bool good = status == NVML_P2P_STATUS_OK;
-        status = ncclNvmlDevicePairs[indexes[i-1]][indexes[i-0]].p2pStatusWrite;
-        good &= status == NVML_P2P_STATUS_OK;
-        if (!good) {
-          if (ncclParamIgnoreDisabledP2p()) {
-            *p2p = 0;
-          } else if (path->type <= PATH_NVB) {
-            WARN("P2P is disabled between NVLINK connected GPUs %d and %d. This should not be the case given their connectivity, and is probably due to a hardware issue. If you still want to proceed, you can set NCCL_IGNORE_DISABLED_P2P=1.", indexes[i-1], indexes[i-0]);
-            return ncclUnhandledCudaError;
-          } else if (path->type < PATH_SYS) {
-            INFO(NCCL_INIT, "P2P is disabled between connected GPUs %d and %d. You can repress this message with NCCL_IGNORE_DISABLED_P2P=1.", indexes[i-1], indexes[i-0]);
-          }
-        }
-      }
-    }
-  }
+  //     for (int i=1; i < verticeN; i++) {
+  //       nvmlGpuP2PStatus_t status;
+  //       status = ncclNvmlDevicePairs[indexes[i-1]][indexes[i-0]].p2pStatusRead;
+  //       bool good = status == NVML_P2P_STATUS_OK;
+  //       status = ncclNvmlDevicePairs[indexes[i-1]][indexes[i-0]].p2pStatusWrite;
+  //       good &= status == NVML_P2P_STATUS_OK;
+  //       if (!good) {
+  //         if (ncclParamIgnoreDisabledP2p()) {
+  //           *p2p = 0;
+  //         } else if (path->type <= PATH_NVB) {
+  //           WARN("P2P is disabled between NVLINK connected GPUs %d and %d. This should not be the case given their connectivity, and is probably due to a hardware issue. If you still want to proceed, you can set NCCL_IGNORE_DISABLED_P2P=1.", indexes[i-1], indexes[i-0]);
+  //           return ncclUnhandledCudaError;
+  //         } else if (path->type < PATH_SYS) {
+  //           INFO(NCCL_INIT, "P2P is disabled between connected GPUs %d and %d. You can repress this message with NCCL_IGNORE_DISABLED_P2P=1.", indexes[i-1], indexes[i-0]);
+  //         }
+  //       }
+  //     }
+  //   }
+  // }
 
   if (path->type == PATH_NVL) {
     struct ncclTopoNode* gpu2 = system->nodes[GPU].nodes+g2;
@@ -477,6 +480,9 @@ NCCL_PARAM(PxnDisable, "PXN_DISABLE", 0);
 // remote proxies without risking deadlocks
 int ncclPxnDisable(struct ncclComm* comm) {
   static int pxnDisable = -1;
+  // HACK HACK
+  // printf("force disable PXN, dunno if that's desireable\n");
+  // pxnDisable = 1;
   if (pxnDisable == -1) {
     if (comm && ncclNetVersion(comm) == 4) {
       INFO(NCCL_INIT, "PXN Disabled as plugin is v4");
@@ -699,41 +705,41 @@ static int nextPow2(int v) {
   return pow2;
 }
 
-ncclResult_t ncclTopoComputeP2pChannels(struct ncclComm* comm) {
-  /* here we already honor comm->max/minCTAs for p2pnChannels. */
-  if (comm->sharedRes->owner != comm) {
-    comm->p2pnChannels = std::min(comm->nChannels, (int)ncclParamMaxP2pNChannels());
-    comm->p2pnChannels = std::min(std::max(comm->p2pnChannels, (int)ncclParamMinP2pNChannels()), comm->sharedRes->tpP2pNChannels);
-  } else {
-    comm->p2pnChannels = std::min(comm->nChannels, (int)ncclParamMaxP2pNChannels());
-    comm->p2pnChannels = std::max(comm->p2pnChannels, (int)ncclParamMinP2pNChannels());
-  }
+// ncclResult_t ncclTopoComputeP2pChannels(struct ncclComm* comm) {
+//   /* here we already honor comm->max/minCTAs for p2pnChannels. */
+//   if (comm->sharedRes->owner != comm) {
+//     comm->p2pnChannels = std::min(comm->nChannels, (int)ncclParamMaxP2pNChannels());
+//     comm->p2pnChannels = std::min(std::max(comm->p2pnChannels, (int)ncclParamMinP2pNChannels()), comm->sharedRes->tpP2pNChannels);
+//   } else {
+//     comm->p2pnChannels = std::min(comm->nChannels, (int)ncclParamMaxP2pNChannels());
+//     comm->p2pnChannels = std::max(comm->p2pnChannels, (int)ncclParamMinP2pNChannels());
+//   }
 
-  int minChannels = comm->p2pnChannels;
-  // We need to loop through all local GPUs to have a global picture
-  for (int g=0; g<comm->topo->nodes[GPU].count; g++) {
-    for (int r=0; r<comm->nRanks; r++) {
-      int nChannels;
-      NCCLCHECK(ncclTopoGetNchannels(comm->topo, g, r, &nChannels));
-      if (nChannels >= 0) minChannels = std::min(minChannels, nChannels);
-    }
-  }
+//   int minChannels = comm->p2pnChannels;
+//   // We need to loop through all local GPUs to have a global picture
+//   for (int g=0; g<comm->topo->nodes[GPU].count; g++) {
+//     for (int r=0; r<comm->nRanks; r++) {
+//       int nChannels;
+//       NCCLCHECK(ncclTopoGetNchannels(comm->topo, g, r, &nChannels));
+//       if (nChannels >= 0) minChannels = std::min(minChannels, nChannels);
+//     }
+//   }
 
-  // Round to next pow2 nChannelsPerPeer and nChannels
-  comm->p2pnChannelsPerPeer = nextPow2(minChannels);
-  comm->p2pnChannels = nextPow2(comm->p2pnChannels);
+//   // Round to next pow2 nChannelsPerPeer and nChannels
+//   comm->p2pnChannelsPerPeer = nextPow2(minChannels);
+//   comm->p2pnChannels = nextPow2(comm->p2pnChannels);
 
-  // Init channels that weren't used so far
-  for (int c=comm->nChannels; c<comm->p2pnChannels; c++) NCCLCHECK(initChannel(comm, c));
+//   // Init channels that weren't used so far
+//   for (int c=comm->nChannels; c<comm->p2pnChannels; c++) NCCLCHECK(initChannel(comm, c));
 
-  // We want to spread channels used when there aren't many and progressively
-  // fill the whole space of nChannels. To do so we mirror the bits in the
-  // nChannels space.
-  for (int c=0; c<comm->p2pnChannels; c++) {
-    comm->p2pChannels[c] = mirrorBits(c, comm->p2pnChannels);
-  }
-  return ncclSuccess;
-}
+//   // We want to spread channels used when there aren't many and progressively
+//   // fill the whole space of nChannels. To do so we mirror the bits in the
+//   // nChannels space.
+//   for (int c=0; c<comm->p2pnChannels; c++) {
+//     comm->p2pChannels[c] = mirrorBits(c, comm->p2pnChannels);
+//   }
+//   return ncclSuccess;
+// }
 
 ncclResult_t ncclTopoGetNvbGpus(struct ncclTopoSystem* system, int rank, int* nranks, int** ranks) {
   int ngpus = system->nodes[GPU].count;

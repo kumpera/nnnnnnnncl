@@ -293,10 +293,12 @@ static ncclResult_t sendConnect(struct ncclComm* comm, struct ncclConnect* conne
   }
   INFO(NCCL_PROXY, "sendConnect ncclPollProxyResponse opId=%p", opId);
 
-  if (map->sameProcess && !ncclCuMemEnable()) {
-    if (map->cudaDev != comm->cudaDev) {
-      WARN("CANNOT DO same process direct memory");
-      return ncclInternalError;
+  //HACK HACK
+  printf("NOT DOING ANY ALLOC FOR sendConnect\n");
+  // if (map->sameProcess && !ncclCuMemEnable()) {
+  //   if (map->cudaDev != comm->cudaDev) {
+  //     WARN("CANNOT DO same process direct memory");
+  //     return ncclInternalError;
 
       // if (!ncclCuMemEnable()) {
       //   // Enable P2P access for Legacy IPC
@@ -308,9 +310,9 @@ static ncclResult_t sendConnect(struct ncclComm* comm, struct ncclConnect* conne
       //     return ncclInternalError;
       //   }
       // }
-    }
-  } else if (!(map->sameProcess && map->cudaDev == comm->cudaDev)) {
-    printf("NOT mAPPING ANYTHING\n");
+  //   }
+  // } else if (!(map->sameProcess && map->cudaDev == comm->cudaDev)) {
+  //   printf("NOT mAPPING ANYTHING\n");
     // if (!map->sameProcess) NCCLCHECK(netMapShm(map->mems+NCCL_NET_MAP_HOSTMEM));
     // if (map->mems[NCCL_NET_MAP_DEVMEM].size) {
     //   NCCLCHECK(ncclP2pImportShareableBuffer(comm, send->proxyConn.tpRank,
@@ -330,7 +332,7 @@ static ncclResult_t sendConnect(struct ncclComm* comm, struct ncclConnect* conne
     //   map->mems[NCCL_NET_MAP_SHARED_DEVMEM].gpuPtr = (char*)(*sharedDevMemPtr);
     //   map->mems[NCCL_NET_MAP_SHARED_DEVMEM].cpuPtr = NULL;
     // }
-  }
+  // }
   //NCCLCHECK(netDumpMap(map));
 
   struct ncclSendMem *sendMem = (struct ncclSendMem*) NCCL_NET_MAP_GET_POINTER(map, gpu, sendMem);
