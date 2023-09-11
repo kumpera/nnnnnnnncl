@@ -53,12 +53,12 @@ static __inline__ int ncclTypeSize(ncclDataType_t type) {
   }
 }
 
-#include "debug.h"
-#include "checks.h"
-#include "cudawrap.h"
+// #include "debug.h"
+// #include "checks.h"
+// #include "cudawrap.h"
 #include "alloc.h"
 #include "utils.h"
 #include "param.h"
-#include "nvtx.h"
+// #include "nvtx.h"
 
 #endif // end include guard

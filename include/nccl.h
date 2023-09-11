@@ -20,6 +20,12 @@
 extern "C" {
 #endif
 
+/** MY HACKW*/
+#include <stddef.h>
+
+/* END OF MY HACKS*/
+
+
 #include <limits.h>
 /* Opaque handle to communicator */
 typedef struct ncclComm* ncclComm_t;

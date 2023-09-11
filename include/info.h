@@ -12,7 +12,7 @@
 #include "collectives.h"
 #include "core.h"
 #include "utils.h"
-#include "strongstream.h"
+// #include "strongstream.h"
 
 typedef enum : uint8_t {
   ncclPatternRing,
@@ -42,7 +42,7 @@ struct ncclInfo {
   ncclRedOp_t op;
   int root; // peer for p2p operations
   ncclComm_t comm;
-  cudaStream_t stream;
+  // cudaStream_t stream;
   // Algorithm details
   int chunkSteps;
   int sliceSteps;
@@ -92,7 +92,7 @@ struct ncclTaskP2p {
 
 struct ncclCudaStreamList {
   struct ncclCudaStreamList *next;
-  cudaStream_t stream;
+  // cudaStream_t stream;
 };
 struct ncclTasks {
   struct Peer {
@@ -110,12 +110,12 @@ struct ncclTasks {
   // The list of user streams aggregated over all tasks present.
   struct ncclCudaStreamList* streams;
   // The most recent user stream. Ignored if streams==nullptr
-  cudaStream_t streamRecent;
+  // cudaStream_t streamRecent;
   // The graph capturing all user streams or invalid if none. Thus we restrict the
   // user that all streams must be captured in the same graph or not captured
   // at all. Technically we could probably relax this, but that would mean
   // collecting a different `ncclTasks` per graph and one for non-graph.
-  struct ncclCudaGraph capturingGraph;
+  // struct ncclCudaGraph capturingGraph;
 };
 
 #endif

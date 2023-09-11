@@ -8,8 +8,8 @@
 #define NCCL_TRANSPORT_H_
 
 #include "devcomm.h"
-#include "graph.h"
-#include "nvmlwrap.h"
+// #include "graph.h"
+// #include "nvmlwrap.h"
 #include "core.h"
 
 #define NTRANSPORTS 4

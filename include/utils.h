@@ -8,7 +8,7 @@
 #define NCCL_UTILS_H_
 
 #include "nccl.h"
-#include "alloc.h"
+// #include "alloc.h"
 #include "checks.h"
 #include <stdint.h>
 #include <time.h>

@@ -13,7 +13,7 @@
 #include "ipcsocket.h"
 #include <pthread.h>
 #include "shm.h"
-#include "p2p.h"
+// #include "p2p.h"
 
 enum ncclProxyOpState { ncclProxyOpNone, ncclProxyOpReady, ncclProxyOpProgress };
 
@@ -122,7 +122,7 @@ struct ncclProxySharedP2p {
   char* cudaBuff;
   char* hostBuff;
   // CUDA IPC
-  ncclIpcDesc ipcDesc;
+  // ncclIpcDesc ipcDesc;
   struct ncclProxyArgs* proxyAppend[MAXCHANNELS]; // Separate send and recv
 };
 
@@ -200,7 +200,7 @@ struct ncclProxyState {
   pthread_t thread;
   struct ncclSocket* listenSock;
   int stop;
-  CUcontext cudaCtx;
+  // CUcontext cudaCtx;
 
   // Used by main thread
   union ncclSocketAddress* peerAddresses;

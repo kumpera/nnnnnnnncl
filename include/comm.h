@@ -7,22 +7,24 @@
 #ifndef NCCL_COMM_H_
 #define NCCL_COMM_H_
 
-#include "transport.h"
-#include "p2p.h"
-#include "collectives.h"
-#include "proxy.h"
-#include "strongstream.h"
+#include <cstdint>
 
-#if CUDART_VERSION < 9000
-struct cudaLaunchParams {
-  void *func;
-  dim3 gridDim;
-  dim3 blockDim;
-  void **args;
-  size_t sharedMem;
-  cudaStream_t stream;
-};
-#endif
+#include "transport.h"
+// #include "p2p.h"
+// #include "collectives.h"
+// #include "proxy.h"
+// #include "strongstream.h"
+
+// #if CUDART_VERSION < 9000
+// struct cudaLaunchParams {
+//   void *func;
+//   dim3 gridDim;
+//   dim3 blockDim;
+//   void **args;
+//   size_t sharedMem;
+//   cudaStream_t stream;
+// };
+// #endif
 
 #define CACHE_LINE_SIZE 128
 #define MEM_ALIGN 4096
@@ -115,7 +117,7 @@ struct ncclSharedResources {
   // top parent rank to localRank translation table
   int* tpRankToLocalRank;
   // Internal streams
-  struct ncclStrongStream deviceStream, hostStream;
+  // struct ncclStrongStream deviceStream, hostStream;
 
   /* proxy related shared res */
   struct ncclProxyState* proxyState;

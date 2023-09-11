@@ -45,7 +45,7 @@ union ncclLLFifoLine {
     uint32_t flag2;
   };
   uint64_t v[2];
-  int4 i4;
+  // int4 i4;
 };
 
 #define WARP_SIZE 32
