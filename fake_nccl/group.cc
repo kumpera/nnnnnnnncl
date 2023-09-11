@@ -21,8 +21,8 @@ __thread struct ncclGroupJob ncclGroupJobMain;
 __thread int ncclGroupBlocking = -1; /* default mode */
 __thread bool ncclGroupJobAbortFlag = false;
 
-void* ncclAsyncJobMain(void* arg);
-static ncclResult_t groupJobComplete(struct ncclGroupJob *job);
+// void* ncclAsyncJobMain(void* arg);
+// static ncclResult_t groupJobComplete(struct ncclGroupJob *job);
 
 ncclResult_t ncclAsyncLaunch(
     struct ncclAsyncJob* job,
@@ -68,36 +68,36 @@ void* ncclAsyncJobMain(void* arg) {
   return arg;
 }
 
-ncclResult_t ncclAsyncJobComplete(struct ncclAsyncJob* job) {
-  ncclResult_t ret;
-  SYSCHECK(pthread_join(job->thread, NULL), "pthread_join");
-  if (job->result != ncclSuccess) {
-    WARN("ncclAsyncJobComplete: job %p failed, job error %d", job, job->result);
-  }
-  ret = job->result;
-  if (job->destructor) job->destructor((void*)job);
-  return ret;
-}
+// ncclResult_t ncclAsyncJobComplete(struct ncclAsyncJob* job) {
+//   ncclResult_t ret;
+//   SYSCHECK(pthread_join(job->thread, NULL), "pthread_join");
+//   if (job->result != ncclSuccess) {
+//     WARN("ncclAsyncJobComplete: job %p failed, job error %d", job, job->result);
+//   }
+//   ret = job->result;
+//   if (job->destructor) job->destructor((void*)job);
+//   return ret;
+// }
 
-NCCL_API(ncclResult_t, ncclGroupStart);
-ncclResult_t ncclGroupStart() {
-  ncclResult_t ret = ncclSuccess;
-  // NVTX3_FUNC_RANGE_IN(nccl_domain);
+// NCCL_API(ncclResult_t, ncclGroupStart);
+// ncclResult_t ncclGroupStart() {
+//   ncclResult_t ret = ncclSuccess;
+//   // NVTX3_FUNC_RANGE_IN(nccl_domain);
 
-  NCCLCHECK(ncclGroupStartInternal());
-  TRACE_CALL("ncclGroupStart()");
-  return ret;
-}
+//   NCCLCHECK(ncclGroupStartInternal());
+//   TRACE_CALL("ncclGroupStart()");
+//   return ret;
+// }
 
-NCCL_API(ncclResult_t, ncclGroupEnd);
-ncclResult_t ncclGroupEnd() {
-  ncclResult_t ret = ncclSuccess;
-  // NVTX3_FUNC_RANGE_IN(nccl_domain);
-  NCCLCHECKGOTO(ncclGroupEndInternal(), ret, exit);
-  TRACE_CALL("ncclGroupEnd()");
-exit:
-  return ret;
-}
+// NCCL_API(ncclResult_t, ncclGroupEnd);
+// ncclResult_t ncclGroupEnd() {
+//   ncclResult_t ret = ncclSuccess;
+//   // NVTX3_FUNC_RANGE_IN(nccl_domain);
+//   NCCLCHECKGOTO(ncclGroupEndInternal(), ret, exit);
+//   TRACE_CALL("ncclGroupEnd()");
+// exit:
+//   return ret;
+// }
 
 struct ncclPreconnectJob {
   struct ncclAsyncJob base;
@@ -113,77 +113,77 @@ ncclResult_t ncclPreconnectFunc(struct ncclAsyncJob* job_) {
   return ncclSuccess;
 }
 
-static ncclResult_t doLaunches(struct ncclComm* head) {
-  ncclResult_t result = ncclSuccess;
-  struct ncclComm* cliqueComm0 = head->intraComm0;
-  struct ncclComm* cliqueHead = head;
-  struct ncclComm* cliqueNextHead;
-  bool useBarrier = ncclParamLaunchMode == ncclLaunchModeGroup;
-  // This outer loop iterates over cliques of comms which are siblings of the
-  // same global entity. We calculate a clique as all comms which have the same
-  // `intraComm0` value.
-  do {
-    struct ncclComm* comm = cliqueHead;
-    bool capturingYes = false, capturingNo = false;
-    do {
-      // (ncclCudaGraphValid(comm->tasks.capturingGraph) ? capturingYes : capturingNo) = true;
-      //HACK HACK
-      // CUDACHECKGOTO(cudaSetDevice(comm->cudaDev), result, failure);
-      NCCLCHECKGOTO(ncclLaunchPrepare(comm), result, failure);
-      if (useBarrier) ncclCommIntraBarrierIn(comm, 1);
-      comm = comm->groupNext;
-    } while (comm != nullptr && comm->intraComm0 == cliqueComm0);
-    cliqueNextHead = comm;
+// static ncclResult_t doLaunches(struct ncclComm* head) {
+//   ncclResult_t result = ncclSuccess;
+//   struct ncclComm* cliqueComm0 = head->intraComm0;
+//   struct ncclComm* cliqueHead = head;
+//   struct ncclComm* cliqueNextHead;
+//   bool useBarrier = ncclParamLaunchMode == ncclLaunchModeGroup;
+//   // This outer loop iterates over cliques of comms which are siblings of the
+//   // same global entity. We calculate a clique as all comms which have the same
+//   // `intraComm0` value.
+//   do {
+//     struct ncclComm* comm = cliqueHead;
+//     bool capturingYes = false, capturingNo = false;
+//     do {
+//       // (ncclCudaGraphValid(comm->tasks.capturingGraph) ? capturingYes : capturingNo) = true;
+//       //HACK HACK
+//       // CUDACHECKGOTO(cudaSetDevice(comm->cudaDev), result, failure);
+//       NCCLCHECKGOTO(ncclLaunchPrepare(comm), result, failure);
+//       if (useBarrier) ncclCommIntraBarrierIn(comm, 1);
+//       comm = comm->groupNext;
+//     } while (comm != nullptr && comm->intraComm0 == cliqueComm0);
+//     cliqueNextHead = comm;
 
-    if (capturingYes && capturingNo) {
-      // We have entered barriers but are aborting without leaving them. Thus
-      // these comms are permanently trashed. We need a good mechanism for
-      // tracking and reporting that.
-      WARN("Either none or all communicators in a ncclGroup() can be CUDA graph captured.");
-      result = ncclInvalidUsage;
-      goto failure;
-    }
+//     if (capturingYes && capturingNo) {
+//       // We have entered barriers but are aborting without leaving them. Thus
+//       // these comms are permanently trashed. We need a good mechanism for
+//       // tracking and reporting that.
+//       WARN("Either none or all communicators in a ncclGroup() can be CUDA graph captured.");
+//       result = ncclInvalidUsage;
+//       goto failure;
+//     }
 
-    while (true) { // Iterate rounds of launches for clique.
-      bool moreRounds;
-      comm = cliqueHead;
-      do { // Iterate clique members.
-        struct ncclComm* next = comm->groupNext;
-        if (useBarrier) {
-          // Barrier reduction result tells us if this was the final round.
-          moreRounds = 0 != ncclCommIntraBarrierOut(comm);
-        } else {
-          moreRounds = comm->unlaunchedPlansHead != nullptr;
-        }
-        if (moreRounds) {
-          // Pop next unlaunched kernel
-          struct ncclKernelPlan* plan = comm->unlaunchedPlansHead;
-          if (plan != nullptr) {
-            comm->unlaunchedPlansHead = plan->next;
-            // HACK HACK
-            // CUDACHECKGOTO(cudaSetDevice(comm->cudaDev), result, failure);
-            NCCLCHECKGOTO(ncclLaunchKernelBefore_NoUncapturedCuda(comm, plan), result, failure);
-            NCCLCHECKGOTO(ncclLaunchKernel(comm, plan), result, failure);
-          }
-          // Barrier reduction input indicates if we require further rounds.
-          if (useBarrier) ncclCommIntraBarrierIn(comm, comm->unlaunchedPlansHead != nullptr ? 1 : 0);
-          if (plan != nullptr) {
-            NCCLCHECKGOTO(ncclLaunchKernelAfter_NoCuda(comm, plan), result, failure);
-          }
-        } else { // Final round.
-          // HACK HACK
-          // CUDACHECKGOTO(cudaSetDevice(comm->cudaDev), result, failure);
-          NCCLCHECKGOTO(ncclLaunchFinish(comm), result, failure);
-        }
-        comm = next;
-      } while (comm != cliqueNextHead);
-      if (!moreRounds) break;
-    }
-    cliqueHead = cliqueNextHead;
-  } while (cliqueHead != nullptr);
-failure:
-  return result;
-}
+//     while (true) { // Iterate rounds of launches for clique.
+//       bool moreRounds;
+//       comm = cliqueHead;
+//       do { // Iterate clique members.
+//         struct ncclComm* next = comm->groupNext;
+//         if (useBarrier) {
+//           // Barrier reduction result tells us if this was the final round.
+//           moreRounds = 0 != ncclCommIntraBarrierOut(comm);
+//         } else {
+//           moreRounds = comm->unlaunchedPlansHead != nullptr;
+//         }
+//         if (moreRounds) {
+//           // Pop next unlaunched kernel
+//           struct ncclKernelPlan* plan = comm->unlaunchedPlansHead;
+//           if (plan != nullptr) {
+//             comm->unlaunchedPlansHead = plan->next;
+//             // HACK HACK
+//             // CUDACHECKGOTO(cudaSetDevice(comm->cudaDev), result, failure);
+//             NCCLCHECKGOTO(ncclLaunchKernelBefore_NoUncapturedCuda(comm, plan), result, failure);
+//             NCCLCHECKGOTO(ncclLaunchKernel(comm, plan), result, failure);
+//           }
+//           // Barrier reduction input indicates if we require further rounds.
+//           if (useBarrier) ncclCommIntraBarrierIn(comm, comm->unlaunchedPlansHead != nullptr ? 1 : 0);
+//           if (plan != nullptr) {
+//             NCCLCHECKGOTO(ncclLaunchKernelAfter_NoCuda(comm, plan), result, failure);
+//           }
+//         } else { // Final round.
+//           // HACK HACK
+//           // CUDACHECKGOTO(cudaSetDevice(comm->cudaDev), result, failure);
+//           NCCLCHECKGOTO(ncclLaunchFinish(comm), result, failure);
+//         }
+//         comm = next;
+//       } while (comm != cliqueNextHead);
+//       if (!moreRounds) break;
+//     }
+//     cliqueHead = cliqueNextHead;
+//   } while (cliqueHead != nullptr);
+// failure:
+//   return result;
+// }
 
 static void groupCleanup(struct ncclComm** groupCommHeadPtr, struct ncclComm** groupCommPreconnectHeadPtr, struct ncclIntruQueue<struct ncclAsyncJob, &ncclAsyncJob::next>* asyncJobsPtr, ncclResult_t* groupErrorPtr, ncclResult_t error) {
   struct ncclComm* comm = *groupCommHeadPtr;
@@ -327,7 +327,10 @@ static ncclResult_t groupLaunch(struct ncclAsyncJob *job_) {
   }
 
   if (groupCommHeadMain != nullptr) {
-    NCCLCHECKGOTO(doLaunches(groupCommHeadMain), ret, fail);
+    //HACK HACK
+    printf("-------- FAIL doLaunches cuz it's a pile of cuda stuff\n");
+    NCCLCHECKGOTO(ncclSystemError, ret, fail);
+    // NCCLCHECKGOTO(doLaunches(groupCommHeadMain), ret, fail);
   }
 
   /* this atomic must happen before cleanup and setting state of communicators */
@@ -422,9 +425,9 @@ fail:
   goto exit;
 }
 
-void ncclGroupJobAbort() {
-  ncclGroupJobAbortFlag = true;
-  (void) groupJobComplete(ncclGroupJobMainPtr);
-  /* reset group abort flag */
-  ncclGroupJobAbortFlag = false;
-}
+// void ncclGroupJobAbort() {
+//   ncclGroupJobAbortFlag = true;
+//   (void) groupJobComplete(ncclGroupJobMainPtr);
+//   /* reset group abort flag */
+//   ncclGroupJobAbortFlag = false;
+// }

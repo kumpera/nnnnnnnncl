@@ -28,6 +28,8 @@ SOURCES = main.cc \
 		fake_nccl/ibvsymbols.cc	\
 		fake_nccl/group.cc	\
 		fake_nccl/connect.cc	\
+		fake_nccl/enqueue.cc	\
+		fake_nccl/trees.cc	\
 
 
 

@@ -631,8 +631,11 @@ static ncclResult_t collNetTrySetup(ncclComm_t comm, ncclComm_t parent, struct n
         if (myinfo->isMaster) {
           comm->collNetSharedRes = parent->collNetSharedRes;
           comm->collNetChannels = std::min(std::max(comm->nChannels, comm->nvlsChannels), parent->collNetSharedRes->nChannels);
-          for (int c = 0; c < comm->collNetChannels; ++c)
-            NCCLCHECKGOTO(initCollnetChannel(comm, c, parent, true), ret, fail);
+        printf("failing collNetTrySetup part2 cuz no channels\n");
+        NCCLCHECKGOTO(ncclSystemError, ret, fail);
+
+        //   for (int c = 0; c < comm->collNetChannels; ++c)
+            // NCCLCHECKGOTO(initCollnetChannel(comm, c, parent, true), ret, fail);
         }
       } else {
         /* TODO: CX-6 and CX-7 both do not support multiple sharp resources per process, if child comm cannot
@@ -654,7 +657,10 @@ static ncclResult_t collNetTrySetup(ncclComm_t comm, ncclComm_t parent, struct n
     comm->collNetSharedRes->buffSize = comm->buffSizes[NCCL_PROTO_SIMPLE];
     for (int c = 0; c < comm->collNetChannels; c++) {
       struct ncclChannel* channel = comm->channels + c;
-      NCCLCHECKGOTO(initCollnetChannel(comm, c, parent, false), ret, fail);
+    printf("failing collNetTrySetup cuz no channels\n");
+    NCCLCHECKGOTO(ncclSystemError, ret, fail);
+    //   NCCLCHECKGOTO(initCollnetChannel(comm, c, parent, false), ret, fail);
+
       for (int h = 0; h < nHeads; h++) {
         const int head = heads[h];
         collNetSetupFail |= ncclTransportCollNetSetup(comm, collNetGraph, channel, head, head, h, collNetRecv);
@@ -894,7 +900,9 @@ static ncclResult_t initTransportsRank(struct ncclComm* comm, struct ncclComm* p
   }
 
   // Determine local Nvls support
-  NCCLCHECK(ncclNvlsInit(comm));
+  //HACK HACK
+  printf("ignoring nvlink init in initTransportsRank\n");
+//   NCCLCHECK(ncclNvlsInit(comm));
 
   // Get rings and trees
   ringGraph.id = 0;
@@ -1730,6 +1738,7 @@ fail:
   free(gpuFlags);
   return ret;
 }
+*/
 
 ncclResult_t ncclCommSetAsyncError(ncclComm_t comm, ncclResult_t nextState) {
   if (nextState < 0 || nextState >= ncclNumResults || comm == NULL) {
@@ -1740,7 +1749,7 @@ ncclResult_t ncclCommSetAsyncError(ncclComm_t comm, ncclResult_t nextState) {
   __atomic_store_n(&comm->asyncResult, nextState, __ATOMIC_RELEASE);
   return ncclSuccess;
 }
-
+/*
 NCCL_API(ncclResult_t, ncclCommInitRankConfig, ncclComm_t* comm, int nranks, ncclUniqueId commId, int myrank, ncclConfig_t *config);*/
 ncclResult_t ncclCommInitRankConfig(ncclComm_t *newcomm, int nranks, ncclUniqueId commId, int myrank, ncclConfig_t *config) {
   // NVTX3_FUNC_RANGE_IN(nccl_domain);

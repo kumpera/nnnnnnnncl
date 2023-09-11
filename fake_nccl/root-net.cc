@@ -288,7 +288,11 @@ ncclResult_t ncclNetInit(struct ncclComm* comm) {
   return ncclSuccess;
 }
 
-// ncclResult_t ncclGpuGdrSupport(struct ncclComm* comm, int* gdrSupport) {
+ncclResult_t ncclGpuGdrSupport(struct ncclComm* comm, int* gdrSupport) {
+  // HACK HACK
+  printf("forcing ncclGpuGdrSupport to false\n");
+  *gdrSupport = 0;
+  return ncclSuccess;
 //   constexpr int GPU_BUF_SIZE = 2*1024*1024;
 // #if CUDART_VERSION >= 11030
 //   // In CUDA 11.3 and later we can now query the cudaDevAttrGPUDirectRDMASupported attribute
@@ -363,7 +367,7 @@ ncclResult_t ncclNetInit(struct ncclComm* comm) {
 //   }
 //   *gdrSupport = gdrSupportMatrix[comm->cudaDev];
 //   return ncclSuccess;
-// }
+}
 
 int ncclNetVersion(struct ncclComm* comm) {
   return (comm->ncclNet == &ncclNet_v4_as_v6) ? 4 : ((comm->ncclNet == &ncclNet_v5_as_v6) ? 5 : 6);
