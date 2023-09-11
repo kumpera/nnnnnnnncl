@@ -15,26 +15,56 @@
 
 
 
-int main(int argc, char **argv) {
-    if (argc != 5) {
-        printf("use machete <store-address> <store-port> <world_size> <rank>\n");
-        return -1;
+
+void broadcastUniqueNCCLID(int rank, c10d::TCPStore &store, ncclUniqueId* ncclID) {
+  std::string storeKey = "key_0";
+
+  if (rank == 0) {
+    auto vec = std::vector<uint8_t>(
+        reinterpret_cast<uint8_t*>(ncclID),
+        reinterpret_cast<uint8_t*>(ncclID) + NCCL_UNIQUE_ID_BYTES);
+    store.set(storeKey, vec);
+  } else {
+    try {
+      auto vec = store.get(storeKey);
+      TORCH_CHECK(vec.size() == NCCL_UNIQUE_ID_BYTES);
+      std::memcpy(ncclID, vec.data(), vec.size());
+    } catch (const std::exception& e) {
+      printf("RANK %d failed to get ncclUniqueId due to %s\n", rank, e.what());
     }
+  }
+}
 
-    int my_rank = std::atoi(argv[4]);
 
-    c10d::TCPStoreOptions opts;
-    opts.port = std::atoi(argv[2]);
-    opts.numWorkers = std::atoi(argv[3]);
-    opts.useLibUV = true; // BE BOLD
-    opts.isServer = my_rank == 0;
+int main(int argc, char **argv) {
+  if (argc != 5) {
+      printf("use machete <store-address> <store-port> <world_size> <rank>\n");
+      return -1;
+  }
 
-    c10d::TCPStore store(argv[1], opts);
+  int my_rank = std::atoi(argv[4]);
 
-    ncclUniqueId ncclID;
+  c10d::TCPStoreOptions opts;
+  opts.port = std::atoi(argv[2]);
+  opts.numWorkers = std::atoi(argv[3]);
+  opts.useLibUV = true; // BE BOLD
+  opts.isServer = my_rank == 0;
+
+  c10d::TCPStore store(argv[1], opts);
+
+  ncclUniqueId ncclID;
+  if (my_rank == 0) {
     C10D_NCCL_CHECK(ncclGetUniqueId(&ncclID));
+    printf("rank 0 got an unique id\n");
+    // unsigned char *z = (unsigned char*)&ncclID;
+    // for(int i = 0; i < sizeof(ncclID); ++i) {
+    //   printf("%02x ", (unsigned)z[i]);
+    // }
+    // printf("\n");
+  }
 
-	// broadcastUniqueNCCLID
+	broadcastUniqueNCCLID(my_rank, store, &ncclID);
+  printf("rank %d got nccl unique id!\n", my_rank);
 	// ncclCommInitRank
 
 

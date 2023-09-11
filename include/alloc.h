@@ -134,7 +134,7 @@ ncclResult_t ncclRealloc(T** ptr, size_t oldNelem, size_t nelem) {
 extern int ncclCuMemEnable();
 
 // static inline ncclResult_t ncclCuMemAlloc(void **ptr, void *handlep, size_t size) {
-//   WARN("CUMEM not supported prior to CUDA 11.3");
+//   WARN("CUMEM not supported prior to ncclIbMallocCUDA 11.3");
 //   return ncclInternalError;
 // }
 // static inline ncclResult_t ncclCuMemFree(void *ptr) {
@@ -251,20 +251,20 @@ extern int ncclCuMemEnable();
 //   return result;
 // }
 
-// // Allocate memory to be potentially ibv_reg_mr'd. This needs to be
-// // allocated on separate pages as those pages will be marked DONTFORK
-// // and if they are shared, that could cause a crash in a child process
-// inline ncclResult_t ncclIbMallocDebug(void** ptr, size_t size, const char *filefunc, int line) {
-//   size_t page_size = sysconf(_SC_PAGESIZE);
-//   void* p;
-//   int size_aligned = ROUNDUP(size, page_size);
-//   int ret = posix_memalign(&p, page_size, size_aligned);
-//   if (ret != 0) return ncclSystemError;
-//   memset(p, 0, size);
-//   *ptr = p;
-//   INFO(NCCL_ALLOC, "%s:%d Ib Alloc Size %ld pointer %p", filefunc, line, size, *ptr);
-//   return ncclSuccess;
-// }
-// #define ncclIbMalloc(...) ncclIbMallocDebug(__VA_ARGS__, __FILE__, __LINE__)
+// Allocate memory to be potentially ibv_reg_mr'd. This needs to be
+// allocated on separate pages as those pages will be marked DONTFORK
+// and if they are shared, that could cause a crash in a child process
+inline ncclResult_t ncclIbMallocDebug(void** ptr, size_t size, const char *filefunc, int line) {
+  size_t page_size = sysconf(_SC_PAGESIZE);
+  void* p;
+  int size_aligned = ROUNDUP(size, page_size);
+  int ret = posix_memalign(&p, page_size, size_aligned);
+  if (ret != 0) return ncclSystemError;
+  memset(p, 0, size);
+  *ptr = p;
+  INFO(NCCL_ALLOC, "%s:%d Ib Alloc Size %ld pointer %p", filefunc, line, size, *ptr);
+  return ncclSuccess;
+}
+#define ncclIbMalloc(...) ncclIbMallocDebug(__VA_ARGS__, __FILE__, __LINE__)
 
 #endif
