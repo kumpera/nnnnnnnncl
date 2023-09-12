@@ -1004,7 +1004,7 @@ ncclResult_t ncclProxyConnect(struct ncclComm* comm, int transport, int send, in
   struct ncclSocket* sock;
   int ready, proxyRank = -1;
   struct ncclProxyState* sharedProxyState = comm->proxyState;
-
+printf("ncclProxyConnect -1\n");
   // Keep one connection per mlocal rank
   for (int i = 0; i < comm->localRanks; ++i) {
     /* find the proxy rank in comm. */
@@ -1013,6 +1013,7 @@ ncclResult_t ncclProxyConnect(struct ncclComm* comm, int transport, int send, in
       break;
     }
   }
+  printf("ncclProxyConnect -2\n");
   proxyConn->sameProcess = comm->peerInfo[proxyRank].pidHash == comm->peerInfo[comm->rank].pidHash ? 1 : 0;
   // Keep one connection per local rank
   proxyConn->connection = NULL;
@@ -1025,14 +1026,17 @@ ncclResult_t ncclProxyConnect(struct ncclComm* comm, int transport, int send, in
       NCCLCHECK(ncclSocketSetFd(-1, &sharedProxyState->peerSocks[i]));
     }
   }
+  printf("ncclProxyConnect -3\n");
 
   proxyConn->tpLocalRank = comm->sharedRes->tpRankToLocalRank[proxyConn->tpRank];
   sock = sharedProxyState->peerSocks + proxyConn->tpLocalRank;
   NCCLCHECK(ncclSocketReady(sock, &ready));
+  printf("ncclProxyConnect -4\n");
   if (!ready) {
     NCCLCHECK(ncclSocketInit(sock, sharedProxyState->peerAddresses+proxyConn->tpRank, comm->sharedRes->magic, ncclSocketTypeProxy, comm->abortFlag));
     NCCLCHECK(ncclSocketConnect(sock));
   }
+  printf("ncclProxyConnect -5\n");
 
   struct ncclProxyInitReq req = {0};
   req.transport = transport;
@@ -1041,23 +1045,28 @@ ncclResult_t ncclProxyConnect(struct ncclComm* comm, int transport, int send, in
   req.tpRank = comm->topParentRanks[comm->rank];
   req.sameProcess = proxyConn->sameProcess;
 
+  printf("ncclProxyConnect -6\n");
   struct ncclProxyInitResp resp = {0};
   // This usually sends proxyConn->connection to identify which connection this is.
   // However, this is part of the response and therefore is ignored
   NCCLCHECK(ncclProxyCallBlocking(comm, proxyConn, ncclProxyMsgInit, &req, sizeof(req), &resp, sizeof(resp)));
   proxyConn->connection = resp.connection;
+  printf("ncclProxyConnect -7\n");
 
   // If we need proxy progress, map progress ops
   struct ncclTransportComm* tcomm = send ? &ncclTransports[transport]->send : &ncclTransports[transport]->recv;
   if (tcomm->proxyProgress) {
+    printf("ncclProxyConnect -8\n");
     char poolPath[] = "/dev/shm/nccl-XXXXXX";
     strncpy(poolPath+sizeof("/dev/shm/nccl-")-1, resp.devShmPath, sizeof("XXXXXX")-1);
     struct ncclProxyOps* proxyOps = sharedProxyState->proxyOps + proxyConn->tpLocalRank;
     if (proxyOps->pool == NULL) {
+      printf("ncclProxyConnect -8.1\n");
       NCCLCHECK(ncclShmOpen(poolPath, sizeof(struct ncclProxyOpsPool), (void**)(&proxyOps->pool), NULL, 0, &proxyOps->handle));
       proxyOps->nextOps = proxyOps->nextOpsEnd = proxyOps->freeOp = -1;
     }
   }
+  printf("ncclProxyConnect -9\n");
   INFO(NCCL_NET|NCCL_PROXY, "Connection to proxy localRank %d -> connection %p", proxyConn->tpLocalRank, proxyConn->connection);
   return ncclSuccess;
 }
@@ -1190,12 +1199,15 @@ ncclResult_t ncclProxyCallBlocking(struct ncclComm* comm, struct ncclProxyConnec
   ncclResult_t res = ncclSuccess;
   void* opId = malloc(1);
 
+  printf("ncclProxyCallBlocking -1 \n");
   NCCLCHECKGOTO(ncclProxyCallAsync(comm, proxyConn, type, reqBuff, reqSize, respSize, opId), res, fail);
 
   do {
+  printf("ncclProxyCallBlocking -2 \n");
     res = ncclPollProxyResponse(comm, proxyConn, respBuff, opId);
   } while (res == ncclInProgress);
 
+  printf("ncclProxyCallBlocking -3 \n");
 exit:
   free(opId);
   return res;
