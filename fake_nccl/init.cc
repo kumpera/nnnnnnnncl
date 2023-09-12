@@ -1123,7 +1123,9 @@ static ncclResult_t initTransportsRank(struct ncclComm* comm, struct ncclComm* p
   INFO(NCCL_INIT, "Connected all trees");
 
   // Setup NVLS
-  NCCLCHECKGOTO(ncclNvlsSetup(comm, parent), ret, fail);
+  //HACK HACK
+    printf("skipping nvlink setup support %d channels %d (BOTH SHOULD BE ZERO\n", comm->nvlsSupport, comm->nvlsChannels);
+//   NCCLCHECKGOTO(ncclNvlsSetup(comm, parent), ret, fail);
   // And NVLS trees if needed
   if (comm->nvlsSupport && comm->localRanks > 1) {
     for (int c=0; c<comm->nvlsChannels; c++) {

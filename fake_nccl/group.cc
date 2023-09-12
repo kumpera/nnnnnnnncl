@@ -68,16 +68,16 @@ void* ncclAsyncJobMain(void* arg) {
   return arg;
 }
 
-// ncclResult_t ncclAsyncJobComplete(struct ncclAsyncJob* job) {
-//   ncclResult_t ret;
-//   SYSCHECK(pthread_join(job->thread, NULL), "pthread_join");
-//   if (job->result != ncclSuccess) {
-//     WARN("ncclAsyncJobComplete: job %p failed, job error %d", job, job->result);
-//   }
-//   ret = job->result;
-//   if (job->destructor) job->destructor((void*)job);
-//   return ret;
-// }
+ncclResult_t ncclAsyncJobComplete(struct ncclAsyncJob* job) {
+  ncclResult_t ret;
+  SYSCHECK(pthread_join(job->thread, NULL), "pthread_join");
+  if (job->result != ncclSuccess) {
+    WARN("ncclAsyncJobComplete: job %p failed, job error %d", job, job->result);
+  }
+  ret = job->result;
+  if (job->destructor) job->destructor((void*)job);
+  return ret;
+}
 
 // NCCL_API(ncclResult_t, ncclGroupStart);
 // ncclResult_t ncclGroupStart() {

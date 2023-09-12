@@ -30,6 +30,8 @@ SOURCES = main.cc \
 		fake_nccl/connect.cc	\
 		fake_nccl/enqueue.cc	\
 		fake_nccl/trees.cc	\
+		fake_nccl/rings.cc	\
+		fake_nccl/tuning.cc	\
 
 
 
